@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--FORM view-->
+    <record id="contract_contract_form_view" model="ir.ui.view">
+        <field
+            name="name"
+        >contract.contract form view (in contract_recurring_payment_ach)
+        </field>
+        <field name="model">contract.contract</field>
+        <field name="inherit_id" ref="contract.contract_contract_form_view" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="payment_mode_code" invisible="1" />
+                <field
+                    name="res_partner_bank_id"
+                    domain="[('partner_id', '=', partner_id)]"
+                    attrs="{'invisible': [('payment_mode_code', '!=', 'ACH-In')],'required': [('payment_mode_code', '=', 'ACH-In')]}"
+                />
+                <field
+                    name="mandate_id"
+                    domain="[('partner_bank_id', '=', res_partner_bank_id),('state', '=', 'valid')]"
+                    attrs="{'invisible': [('payment_mode_code', '!=', 'ACH-In')],'required': [('payment_mode_code', '=', 'ACH-In')]}"
+                />
+            </field>
+        </field>
+    </record>
+</odoo>
