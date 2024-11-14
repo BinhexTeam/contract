@@ -10,8 +10,7 @@
     "depends": ["subscription_oca", "payment_stripe", "payment"],
     "data": [
         "views/sale_subscription_views.xml",
-        "wizard/sale_subscription_payment_wizard.xml",
-        "security/ir.model.access.csv"
+        "data/ir_cron.xml",
     ],
     "application": True,
     "installable": True,

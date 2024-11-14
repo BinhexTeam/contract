@@ -15,10 +15,6 @@ class SaleSubscription(models.Model):
     # ID del cliente en Stripe
     stripe_customer = fields.Char(string="Stripe Customer ID")
 
-    def _get_client_stripe(self, secret_key):
-        client = stripe.StripeClient(secret_key)
-        return client
-
     def create_stripe_customer(self):
         """Crea o recupera el cliente de Stripe asociado a la suscripción."""
         provider = self.env["payment.provider"].search(
@@ -26,13 +22,11 @@ class SaleSubscription(models.Model):
         )
         stripe.api_key = provider.stripe_secret_key
 
-        client = self._get_client_stripe(provider.stripe_secret_key)
-
         if not self.stripe_customer:
             customer = stripe.Customer.create(
-                email=self.partner_id.email,
-                name=self.partner_id.name,
-                metadata={"odoo_subscription_id": self.id},
+                email=self.env.user.email,
+                name=self.env.user.name,
+                metadata={"odoo_subscription": self.id},
             )
             self.stripe_customer = customer["id"]
         return self.stripe_customer

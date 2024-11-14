@@ -9,7 +9,7 @@
         <field name="arch" type="xml">
             <field name="recurring_next_date" position="after">
                 <field name="is_recurrent" widget="boolean_toggle" />
-                <field name="stripe_customer" widget="CopyClipboardChar" />
+                <!-- <field name="stripe_customer" widget="CopyClipboardChar" /> -->
             </field>
 
         </field>
