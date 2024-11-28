@@ -12,7 +12,6 @@
         "views/sale_subscription_views.xml",
         "data/ir_cron.xml",
     ],
-    "application": True,
     "installable": True,
     "auto_install": False,
 }
