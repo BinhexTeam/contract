@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
     "name": "Recurring Payments with Stripe",
     "version": "16.0.1.0.0",

@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import stripe
 
-from odoo import models, fields, api
+from odoo import api, fields, models
 
 
 class SaleSubscription(models.Model):

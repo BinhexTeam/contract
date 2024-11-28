@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 import logging
+
 import stripe
 
-from odoo import models, api
+from odoo import api, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
