@@ -72,7 +72,7 @@ class AccountMove(models.Model):
                         )
 
                 except stripe.StripeError as e:
-                    raise UserError(f"Stripe error: {e.user_message or str(e)}")
+                    raise UserError(f"Stripe error: {e}")
 
             else:
                 return super(AccountMove, self).action_register_payment()
