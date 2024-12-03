@@ -34,6 +34,7 @@ addon | version | maintainers | summary
 [contract_variable_quantity](contract_variable_quantity/) | 16.0.1.1.0 |  | Variable quantity in contract recurrent invoicing
 [product_contract](product_contract/) | 16.0.1.0.0 | [![sbejaoui](https://github.com/sbejaoui.png?size=30px)](https://github.com/sbejaoui) | Recurring - Product Contract
 [subscription_oca](subscription_oca/) | 16.0.1.0.0 |  | Generate recurring invoices.
+[recurring_payments_stripe](recurring_payments_stripe/) | 16.0.1.0.0 |  | Pay automatically with Stripe
 
 [//]: # (end addons)
 
