@@ -6,8 +6,8 @@ from odoo import api, fields, models
 class SaleSubscription(models.Model):
     _inherit = "sale.subscription"
 
-    charge_automatically = fields.Boolean(string="Charge Automatically")
-    stripe_customer = fields.Char(string="Stripe Customer ID")
+    charge_automatically = fields.Boolean("Charge Automatically")
+    stripe_customer = fields.Char("Stripe Customer ID")
     provider_id = fields.Many2one(
         string="Provider_id",
         domain=[("code", "=", "stripe")],

@@ -2,7 +2,7 @@ import logging
 
 import stripe
 
-from odoo import api, models
+from odoo import _, api, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class AccountMove(models.Model):
                         invoice.payment_state = "paid"
                     elif payment_intent["status"] == "requires_action":
                         raise UserError(
-                            "Payment requires additional authentication (3D Secure)."
+                            _("Payment requires additional authentication (3D Secure).")
                         )
                     else:
                         raise UserError(

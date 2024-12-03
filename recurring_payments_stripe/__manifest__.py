@@ -13,4 +13,6 @@
     ],
     "installable": True,
     "auto_install": False,
+    "external_dependencies": {"python": ["stripe"]},
+    "maintainers": ["mjavint"],
 }
