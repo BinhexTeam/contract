@@ -42,7 +42,7 @@ class AccountMove(models.Model):
                         metadata={"odoo_invoice_id": str(invoice.id)},
                     )
 
-                    # Manejar el resultado del PaymentIntent
+                    # Handling the result of the PaymentIntent
                     if payment_intent["status"] == "succeeded":
                         # If the payment is successful, record the payment on the invoice
                         Payment = self.env["account.payment"].sudo()
