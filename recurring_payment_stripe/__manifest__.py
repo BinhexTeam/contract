@@ -1,7 +1,7 @@
 {
-    "name": "Recurring Payments with Stripe",
+    "name": "Recurring Payment with Stripe",
     "version": "16.0.1.0.0",
-    "summary": """ Recurring Payments with Stripe """,
+    "summary": """Recurring Payment with Stripe""",
     "author": "Binhex, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/contract",
     "license": "AGPL-3",
@@ -13,4 +13,6 @@
     ],
     "installable": True,
     "auto_install": False,
+    "external_dependencies": {"python": ["stripe"]},
+    "maintainers": ["mjavint"],
 }
