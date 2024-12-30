@@ -42,33 +42,31 @@ class AccountMove(models.Model):
                     )
 
                     # Handling the result of the PaymentIntent
-                    if payment_intent["status"] == "succeeded":
-                        # If the payment is successful, record the payment on the invoice
-                        Payment = self.env["account.payment"].sudo()
-                        payment_vals = {
-                            "journal_id": self.env["account.journal"]
-                            .search([("type", "=", "bank")], limit=1)
-                            .id,
-                            "amount": invoice.amount_total,
-                            "payment_type": "inbound",
-                            "partner_type": "customer",
-                            "partner_id": invoice.partner_id.id,
-                            "payment_method_id": self.env.ref(
-                                "account.account_payment_method_manual_in"
-                            ).id,
-                            "ref": f"Stripe - {payment_intent['id']}",
-                        }
-                        payment = Payment.create(payment_vals)
-                        payment.action_post()
-                        invoice.payment_state = "paid"
-                    elif payment_intent["status"] == "requires_action":
+                    if payment_intent["status"] != "succeeded":
                         raise UserError(
-                            _("Payment requires additional authentication (3D Secure).")
+                            _("Payment failed with status: %s")
+                            % payment_intent["status"]
                         )
-                    else:
-                        raise UserError(
-                            f"Stripe payment error: {payment_intent['status']}"
-                        )
+
+                    # If the payment is successful, record the payment on
+                    # the invoice
+                    Payment = self.env["account.payment"].sudo()
+                    payment_vals = {
+                        "journal_id": self.env["account.journal"]
+                        .search([("type", "=", "bank")], limit=1)
+                        .id,
+                        "amount": invoice.amount_total,
+                        "payment_type": "inbound",
+                        "partner_type": "customer",
+                        "partner_id": invoice.partner_id.id,
+                        "payment_method_id": self.env.ref(
+                            "account.account_payment_method_manual_in"
+                        ).id,
+                        "ref": f"Stripe - {payment_intent['id']}",
+                    }
+                    payment = Payment.create(payment_vals)
+                    payment.action_post()
+                    invoice.payment_state = "paid"
 
                 except stripe.StripeError as e:
                     raise UserError(f"Stripe error: {e}") from e
@@ -78,7 +76,8 @@ class AccountMove(models.Model):
 
     def _create_token(self, subscription):
         provider = subscription.provider_id
-        # Search for an existing payment token for the given provider and partner
+        # Search for an existing payment token for the given provider and
+        # partner
         token = self.env["payment.token"].search(
             [
                 ("provider_id", "=", provider.id),
@@ -111,13 +110,20 @@ class AccountMove(models.Model):
             # Retrieve the default payment method for the customer,
             # or create one if it doesn't exist
             new_token.stripe_payment_method = (
-                stripe.PaymentMethod.list(customer=customer.id, type="card", limit=1)
+                stripe.PaymentMethod.list(
+                    customer=customer.id,
+                    type="card",
+                    limit=1,
+                )
                 .data[0]
                 .id
                 if stripe.PaymentMethod.list(
                     customer=customer.id, type="card", limit=1
                 ).data
-                else stripe.Customer.create_source(customer.id, source="tok_visa").id
+                else stripe.Customer.create_source(
+                    customer.id,
+                    source="tok_visa",
+                ).id
             )
 
             # Assign the new token to the variable

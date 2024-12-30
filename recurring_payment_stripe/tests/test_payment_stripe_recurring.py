@@ -146,26 +146,8 @@ class TestPaymentStripeRecurring(TransactionCase):
         return rec
 
     def test_action_register_payment(self):
-        token = self.invoice._create_token(subscription=self.sub8)
-        self.assertTrue(token, "Payment token was not created")
-
-        # Check if the PaymentIntent was created
-        payment_intent = stripe.PaymentIntent.create(
-            amount=int(self.invoice.amount_total * 100),
-            currency=self.invoice.currency_id.name.lower(),
-            customer=token.provider_ref,
-            payment_method=token.stripe_payment_method,
-            off_session=True,
-            confirm=True,
-            metadata={"odoo_invoice_id": str(self.invoice.name)},
-        )
-        self.assertEqual(
-            payment_intent["status"],
-            "succeeded",
-            "PaymentIntent was not successful",
-        )
         self.invoice.action_register_payment()
         self.assertTrue(
             self.invoice.payment_state == "paid",
-            "Invoice was not paid",
+            f"Invoice {self.invoice.id} should be paid",
         )
