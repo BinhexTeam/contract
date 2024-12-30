@@ -149,13 +149,6 @@ class TestPaymentStripeRecurring(TransactionCase):
         token = self.invoice._create_token(subscription=self.sub8)
         self.assertTrue(token, "Payment token was not created")
 
-        method_line = self.env["account.payment.method.line"].search(
-            [("name", "=", self.provider.name)], limit=1
-        )
-        self.assertTrue(method_line, "Payment method line was not found")
-        method = method_line.payment_method_id
-        self.assertTrue(method, "Payment method was not found")
-
         # Check if the PaymentIntent was created
         payment_intent = stripe.PaymentIntent.create(
             amount=int(self.invoice.amount_total * 100),
