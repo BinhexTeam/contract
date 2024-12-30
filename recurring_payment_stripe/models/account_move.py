@@ -143,6 +143,7 @@ class AccountMove(models.Model):
             if subscription and subscription.charge_automatically:
                 try:
                     # Register the payment
+                    invoice.action_post()
                     invoice.action_register_payment()
                 except Exception as e:
                     _logger.error(f"Error Processing Due Invoices: {str(e)}")
