@@ -144,8 +144,13 @@ class TestPaymentStripeRecurring(TransactionCase):
         return rec
 
     def test_action_register_payment(self):
-        self.invoice.action_register_payment()
+
+        self.invoice.cron_process_due_invoices()
         self.assertTrue(
             self.invoice.payment_state == "paid",
             f"Invoice {self.invoice.id} should be paid",
+        )
+        self.assertTrue(
+            self.invoice.state == "posted",
+            f"Invoice {self.invoice.id} should be posted",
         )
