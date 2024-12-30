@@ -93,6 +93,7 @@ class TestPaymentStripeRecurring(TransactionCase):
                 "stage_id": cls.stage.id,
                 "fiscal_position_id": cls.fiscal.id,
                 "charge_automatically": True,
+                "provider_id": cls.provider.id,
             }
         )
 
@@ -145,32 +146,6 @@ class TestPaymentStripeRecurring(TransactionCase):
         return rec
 
     def test_action_register_payment(self):
-        # Set Stripe API key for testing
-        stripe.api_key = self.provider.stripe_secret_key
-
-        # Create a new Stripe customer
-        customer = stripe.Customer.create(
-            email=self.partner.email,
-            name=self.partner.name,
-        )
-
-        # Create a new payment method for the customer
-        payment_method = stripe.PaymentMethod.create(
-            type="card",
-            card={
-                "number": "4242424242424242",
-                "exp_month": 1,
-                "exp_year": 2025,
-                "cvc": "123",
-            },
-        )
-
-        # Attach the payment method to the customer
-        stripe.PaymentMethod.attach(
-            payment_method.id,
-            customer=customer.id,
-        )
-
         token = self.invoice._create_token(subscription=self.sub8)
         self.assertTrue(token, "Payment token was not created")
 
