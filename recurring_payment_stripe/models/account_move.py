@@ -17,7 +17,6 @@ class AccountMove(models.Model):
         payment on subscriptions.
         """
         for invoice in self:
-            res = super(AccountMove, self).action_register_payment()
             # Find the subscription associated with the invoice, if it exists
             subscription = invoice.subscription_id
 
@@ -75,7 +74,7 @@ class AccountMove(models.Model):
                     raise UserError(f"Stripe error: {e}") from e
 
             else:
-                return res
+                return super(AccountMove, self).action_register_payment()
 
     def _create_token(self, subscription):
         provider = subscription.provider_id
