@@ -1,6 +1,9 @@
 import uuid
 
+import stripe
+
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
 
 
@@ -102,13 +105,13 @@ class TestPaymentStripeRecurring(TransactionCase):
                 "invoice_line_ids": [
                     (
                         0,
-                        0,
+                        None,
                         {
-                            "name": "Test Product",
-                            "quantity": 1,
-                            "price_unit": 100.0,
+                            "product_id": cls.product_2.id,
+                            "quantity": 3,
+                            "price_unit": 750,
                         },
-                    )
+                    ),
                 ],
                 "subscription_id": cls.sub8.id,
             }
@@ -144,13 +147,46 @@ class TestPaymentStripeRecurring(TransactionCase):
         return rec
 
     def test_action_register_payment(self):
+        self.assertTrue(
+            self.invoice.state == "draft",
+            f"Invoice {self.invoice.id} should be in draft state",
+        )
+
+        with self.assertRaises(UserError) as context:
+            self.invoice.cron_process_due_invoices()
+        self.assertIn("Payment failed with status", str(context.exception))
 
         self.invoice.cron_process_due_invoices()
-        self.assertTrue(
-            self.invoice.payment_state == "paid",
-            f"Invoice {self.invoice.id} should be paid",
-        )
         self.assertTrue(
             self.invoice.state == "posted",
             f"Invoice {self.invoice.id} should be posted",
         )
+        self.assertTrue(
+            self.invoice.payment_state == "paid",
+            f"Invoice {self.invoice.id} should be paid",
+        )
+
+    def test_stripe_payment_intent(self):
+        stripe.api_key = self.provider.stripe_secret_key
+        provider = self.sub8.provider_id
+        stripe.api_key = provider.stripe_secret_key
+        token = self.invoice._create_token(self.sub8)
+        payment_intent: stripe.PaymentIntent = None
+        with self.assertRaises(UserError) as context:
+            payment_intent = stripe.PaymentIntent.create(
+                # Stripe uses cents
+                amount=int(self.invoice.amount_total * 100),
+                currency=self.invoice.currency_id.name.lower(),
+                customer=token.provider_ref,
+                payment_method=token.stripe_payment_method,
+                automatic_payment_methods={"enabled": True},
+                # For automatic payments without user intervention
+                off_session=True,
+                # Confirm the PaymentIntent immediately
+                confirm=True,
+                metadata={"odoo_invoice_id": str(self.invoice.id)},
+            )
+        self.assertIn("Payment failed with status", str(context.exception))
+
+        # Check if the payment was successful
+        self.assertEqual(payment_intent.status, "succeeded")
