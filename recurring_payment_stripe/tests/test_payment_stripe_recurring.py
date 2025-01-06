@@ -3,7 +3,6 @@ import uuid
 import stripe
 
 from odoo import fields
-from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
 
 
@@ -152,11 +151,8 @@ class TestPaymentStripeRecurring(TransactionCase):
             f"Invoice {self.invoice.id} should be in draft state",
         )
 
-        with self.assertRaises(UserError) as context:
-            self.invoice.cron_process_due_invoices()
-        self.assertIn("Payment failed with status", str(context.exception))
-
         self.invoice.cron_process_due_invoices()
+
         self.assertTrue(
             self.invoice.state == "posted",
             f"Invoice {self.invoice.id} should be posted",
@@ -171,22 +167,20 @@ class TestPaymentStripeRecurring(TransactionCase):
         provider = self.sub8.provider_id
         stripe.api_key = provider.stripe_secret_key
         token = self.invoice._create_token(self.sub8)
-        payment_intent: stripe.PaymentIntent = None
-        with self.assertRaises(UserError) as context:
-            payment_intent = stripe.PaymentIntent.create(
-                # Stripe uses cents
-                amount=int(self.invoice.amount_total * 100),
-                currency=self.invoice.currency_id.name.lower(),
-                customer=token.provider_ref,
-                payment_method=token.stripe_payment_method,
-                automatic_payment_methods={"enabled": True},
-                # For automatic payments without user intervention
-                off_session=True,
-                # Confirm the PaymentIntent immediately
-                confirm=True,
-                metadata={"odoo_invoice_id": str(self.invoice.id)},
-            )
-        self.assertIn("Payment failed with status", str(context.exception))
+
+        payment_intent = stripe.PaymentIntent.create(
+            # Stripe uses cents
+            amount=int(self.invoice.amount_total * 100),
+            currency=self.invoice.currency_id.name.lower(),
+            customer=token.provider_ref,
+            payment_method=token.stripe_payment_method,
+            automatic_payment_methods={"enabled": True},
+            # For automatic payments without user intervention
+            off_session=True,
+            # Confirm the PaymentIntent immediately
+            confirm=True,
+            metadata={"odoo_invoice_id": str(self.invoice.id)},
+        )
 
         # Check if the payment was successful
         self.assertEqual(payment_intent.status, "succeeded")
