@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+        <record
+        id="contract_contract_form_view_inherit_recurring_payment"
+        model="ir.ui.view"
+    >
+            <field name="name">contract.contract form view (in contract).form</field>
+            <field name="model">contract.contract</field>
+            <field name="inherit_id" ref="contract.contract_contract_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='recurring_type']" position="after">
+                    <group name="recurring_payment" string="Recurring payment">
+                        <group>
+                            <field name="allow_use_payment_token" />
+                        </group>
+                        <group>
+                            <field name="next_recurring_payment_date" />
+                        </group>
+                    </group>
+                </xpath>
+                <notebook position="inside">
+                    <page name="recurring_payments" string="Recurring Payments">
+                        <field name="payment_ids">
+                            <tree>
+                                <field name="date" />
+                                <field name="name" />
+                                <field name="amount_signed" />
+                                <field name="state" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+</odoo>

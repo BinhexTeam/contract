@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--FORM view-->
+    <record id="contract_contract_form_view" model="ir.ui.view">
+        <field
+            name="name"
+        >contract.contract form view (in contract_recurring_payment_stripe)
+        </field>
+        <field name="model">contract.contract</field>
+        <field name="inherit_id" ref="contract.contract_contract_form_view"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="payment_mode_code" invisible="1"/>
+                <field
+                    name="payment_token_id"
+                    attrs="{'invisible': [('payment_mode_code', '!=', 'stripe')]}"
+                    domain="[('partner_id', '=', partner_id),('provider_id.code', '=', 'stripe')]"
+                />
+            </field>
+        </field>
+    </record>
+</odoo>
