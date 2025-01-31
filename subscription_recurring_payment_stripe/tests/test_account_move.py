@@ -40,9 +40,5 @@ class TestAccountMove(SubscriptionRecurringPaymentStripe):
             invoice.cron_process_due_invoices()
 
             # Verify that the payment has been registered correctly
-            transaction = self.env["payment.transaction"].search(
-                [("reference", "=", invoice.name)], limit=1
-            )
-
             self.assertEqual(invoice.state, "posted", "Invoice not posted.")
             self.assertEqual(invoice.payment_state, "paid", "Invoice not paid.")
