@@ -12,12 +12,16 @@ class SubscriptionRecurringPaymentStripe(StripeCommon):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
-
         cls.portal_user = cls.env.ref("base.demo_user0")
         cls.cash_journal = cls.env["account.journal"].search(
             [
                 ("type", "=", "cash"),
+                ("company_id", "=", cls.env.ref("base.main_company").id),
+            ]
+        )[0]
+        cls.bank_journal = cls.env["account.journal"].search(
+            [
+                ("type", "=", "bank"),
                 ("company_id", "=", cls.env.ref("base.main_company").id),
             ]
         )[0]
@@ -149,7 +153,7 @@ class SubscriptionRecurringPaymentStripe(StripeCommon):
                 "pricelist_id": cls.pricelist2.id,
                 "date_start": fields.Date.today() - relativedelta(days=100),
                 "in_progress": True,
-                "journal_id": cls.cash_journal.id,
+                "journal_id": cls.bank_journal.id,
                 "charge_automatically": True,
                 "provider_id": cls.stripe.id,
                 "payment_token_id": cls.token.id,
