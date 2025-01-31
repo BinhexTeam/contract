@@ -1,11 +1,13 @@
 import uuid
+
 from dateutil.relativedelta import relativedelta
+
 from odoo import fields
+
 from odoo.addons.payment_stripe.tests.common import StripeCommon
 
 
 class SubscriptionRecurringPaymentStripe(StripeCommon):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

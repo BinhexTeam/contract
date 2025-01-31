@@ -1,15 +1,15 @@
+import logging
+
 from odoo import fields
+
 from odoo.addons.subscription_recurring_payment_stripe.tests.common import (
     SubscriptionRecurringPaymentStripe,
 )
-
-import logging
 
 _logger = logging.getLogger(__name__)
 
 
 class TestAccountMove(SubscriptionRecurringPaymentStripe):
-
     def test_cron_process_due_invoices(self):
         # Crear una suscripción de prueba
         subscription = self.sub1
