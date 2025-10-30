@@ -29,9 +29,16 @@ class TestSubscriptionOCA(BaseCommon):
             [
                 ("type", "=", "sale"),
                 ("company_id", "=", cls.env.ref("base.main_company").id),
-            ],
-            limit=1,
-        )
+            ]
+        )[0]
+
+        cls.bank_journal = cls.env["account.journal"].search(
+            [
+                ("type", "=", "bank"),
+                ("company_id", "=", cls.env.ref("base.main_company").id),
+            ]
+        )[0]
+
         cls.pricelist1 = cls.env["product.pricelist"].create(
             {
                 "name": "pricelist for contract test",
@@ -119,6 +126,14 @@ class TestSubscriptionOCA(BaseCommon):
             }
         )
 
+        cls.tmpl6 = cls.create_sub_template(
+            {
+                "recurring_rule_boundary": "unlimited",
+                "invoicing_mode": "invoice_and_payment",
+                "recurring_rule_type": "years",
+            }
+        )
+
         cls.stage = cls.env["sale.subscription.stage"].create(
             {
                 "name": "Test Sub Stage",
@@ -196,6 +211,14 @@ class TestSubscriptionOCA(BaseCommon):
             }
         )
 
+        cls.sub10 = cls.create_sub(
+            {
+                "template_id": cls.tmpl6.id,
+                "recurring_rule_boundary": False,
+                "date_start": fields.Date.today(),
+            }
+        )
+
         cls.sub_line = cls.create_sub_line(cls.sub1)
         cls.sub_line2 = cls.env["sale.subscription.line"].create(
             {
@@ -213,6 +236,7 @@ class TestSubscriptionOCA(BaseCommon):
         cls.sub_line52 = cls.create_sub_line(cls.sub5, cls.product_2.id)
         cls.sub_line71 = cls.create_sub_line(cls.sub7)
         cls.sub_line72 = cls.create_sub_line(cls.sub7, cls.product_2.id)
+        cls.sub_line102 = cls.create_sub_line(cls.sub10, cls.product_2.id)
 
         cls.close_reason = cls.env["sale.subscription.close.reason"].create(
             {
@@ -252,6 +276,44 @@ class TestSubscriptionOCA(BaseCommon):
                 "compute_price": "formula",
                 "base": "standard_price",
                 "fixed_price": 1000,
+            }
+        )
+
+        cls.account_payment_method = cls.env["account.payment.method"].create(
+            {
+                "name": "Test Payment Method",
+                "code": "none",
+                "payment_type": "inbound",
+            }
+        )
+
+        account_payment_method_line = cls.env["account.payment.method.line"].create(
+            {
+                "payment_method_id": cls.account_payment_method.id,
+                "company_id": cls.env.ref("base.main_company").id,
+                "name": "Test Method Line",
+            }
+        )
+
+        cls.journal = cls.env["account.journal"].create(
+            {
+                "name": "Test Journal",
+                "type": "bank",
+                "company_id": cls.env.ref("base.main_company").id,
+                "code": "TESTJNL",
+                "inbound_payment_method_line_ids": [
+                    (4, account_payment_method_line.id)
+                ],
+            }
+        )
+
+        cls.provider_test = cls.env["payment.provider"].create(
+            {
+                "name": "Test Provider for Subscriptions",
+                "code": "none",
+                "company_id": cls.env.ref("base.main_company").id,
+                "journal_id": cls.journal.id,
+                "state": "test",
             }
         )
 
@@ -540,7 +602,7 @@ class TestSubscriptionOCA(BaseCommon):
 
     def test_x_subscription_oca_pricelist_related(self):
         res = self.partner.read(["subscription_count", "subscription_ids"])
-        self.assertEqual(res[0]["subscription_count"], 9)
+        self.assertEqual(res[0]["subscription_count"], 10)
         res = self.partner.action_view_subscription_ids()
         self.assertIsInstance(res, dict)
         sale_order = self.sub1.create_sale_order()
@@ -683,3 +745,24 @@ class TestSubscriptionOCA(BaseCommon):
         )
         test_res.append(group_stage_ids)
         return test_res
+
+    def test_subscription_invoice_and_payment(self):
+        subscription = self.sub10
+        subscription.generate_invoice()
+        self.assertEqual(len(subscription.invoice_ids), 1)
+        self.assertEqual(subscription.invoice_ids.state, "posted")
+        self.env["payment.token"].create(
+            {
+                "payment_details": "1234",
+                "provider_id": self.provider_test.id,
+                "partner_id": self.partner.id,
+                "provider_ref": "provider Ref (TEST)",
+                "active": True,
+            }
+        )
+        subscription.generate_invoice()
+        self.assertEqual(len(subscription.invoice_ids), 2)
+        last_invoice = subscription.invoice_ids[-1]
+        self.assertEqual(last_invoice.state, "posted")
+        payments = last_invoice.payment_ids
+        self.assertEqual(len(payments), 0)

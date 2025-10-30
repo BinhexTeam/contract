@@ -328,16 +328,26 @@ class SaleSubscription(models.Model):
 
     def generate_invoice(self):
         invoice_number = ""
-        message_body = ""
-        msg_static = self.env._("Created invoice with reference")
-        if self.template_id.invoicing_mode in ["draft", "invoice", "invoice_send"]:
+        msg_static = _("Created invoice with reference")
+        if self.template_id.invoicing_mode in [
+            "draft",
+            "invoice",
+            "invoice_send",
+            "invoice_and_payment",
+        ]:
             invoice = self.create_invoice()
             if self.template_id.invoicing_mode != "draft":
                 invoice.action_post()
-                mail_template = self.template_id.invoice_mail_template_id
-                self.env["account.move.send"]._generate_and_send_invoices(
-                    invoice, mail_template=mail_template, sending_methods=["email"]
-                )
+                if self.template_id.invoicing_mode == "invoice_send":
+                    mail_template = self.template_id.invoice_mail_template_id
+                    invoice.with_context(force_send=True).message_post_with_template(
+                        mail_template.id,
+                        composition_mode="comment",
+                        email_layout_xmlid="mail.mail_notification_paynow",
+                    )
+                    invoice.write({"is_move_sent": True})
+                if self.template_id.invoicing_mode == "invoice_and_payment":
+                    self.create_payment(invoice)
                 invoice_number = invoice.name
                 message_body = (
                     f"<b>{msg_static}</b> "
@@ -363,6 +373,50 @@ class SaleSubscription(models.Model):
             message_body = f"<b>{msg_static}</b> {invoice_number}"
         self.calculate_recurring_next_date(self.recurring_next_date)
         self.message_post(body=Markup(message_body))
+
+    def create_payment(self, invoice):
+        invoice.ensure_one()
+        payment_token = self.env["payment.token"].search(
+            [("partner_id", "=", invoice.partner_id.id)],
+            order="create_date desc",
+            limit=1,
+        )
+        if not payment_token:
+            self.message_post(
+                body=_(
+                    "No payment token found for partner %s" % invoice.partner_id.name
+                )
+            )
+            return
+        provider = payment_token.provider_id
+        method_line = self.env["account.payment.method.line"].search(
+            [
+                ("payment_method_id.code", "=", provider.code),
+                ("company_id", "=", invoice.company_id.id),
+            ],
+            limit=1,
+        )
+        payment_register = self.env["account.payment.register"]
+        payment_vals = {
+            "currency_id": invoice.currency_id.id,
+            "journal_id": provider.journal_id.id,
+            "company_id": invoice.company_id.id,
+            "partner_id": invoice.partner_id.id,
+            "communication": invoice.name,
+            "payment_type": "inbound",
+            "partner_type": "customer",
+            "payment_difference_handling": "open",
+            "writeoff_label": "Write-Off",
+            "payment_date": fields.Date.today(),
+            "amount": invoice.amount_total,
+            "payment_method_line_id": method_line.id,
+            "payment_token_id": payment_token.id,
+        }
+        payment_register.with_context(
+            active_model="account.move",
+            active_ids=invoice.ids,
+            active_id=invoice.id,
+        ).create(payment_vals).action_create_payments()
 
     def manual_invoice(self):
         invoice_id = self.create_invoice()
