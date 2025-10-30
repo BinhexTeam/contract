@@ -3,7 +3,7 @@
 {
     "name": "Subscription OCA Recurrent Payment",
     "summary": "Generate recurring invoices.",
-    "version": "16.0.1.0.0",
+    "version": "17.0.1.0.0",
     "category": "Subscription Management",
     "website": "https://github.com/OCA/contract",
     "license": "AGPL-3",

@@ -35,8 +35,10 @@ class Subscription(models.Model):
                         parameter directly.
         Returns:
                 account.move or whatever the superclass returns
-                        When handling 'recurring_payment', the created and posted invoice
-                        record (account.move) is the effective result. Otherwise the return
+                        When handling 'recurring_payment', the created and
+                        posted invoice
+                        record (account.move) is the effective result. Otherwise
+                        the return
                         value is whatever super().generate_invoice returns.
         Side effects:
         - Creates and posts an invoice and a corresponding payment immediately.
@@ -53,7 +55,7 @@ class Subscription(models.Model):
         """
 
         msg_static = _("Created invoice with reference")
-        if self.template_id.invoicing_mode == "recurring_payment":
+        if self.template_id.invoicing_mode == "invoice_and_payment":
             invoice = self.create_invoice()
             invoice.action_post()
             self.create_payment(invoice)
@@ -105,12 +107,9 @@ class Subscription(models.Model):
         """
         self.ensure_one()
 
-        def _last_payment_token(self, partner):
-            return self.env["payment.token"].search(
-                [("partner_id", "=", partner.id)], order="create_date desc", limit=1
-            )
-
-        payment_token = _last_payment_token(self, invoice.partner_id)
+        payment_token = self.env["payment.token"].search(
+            [("partner_id", "=", invoice.partner_id)], order="create_date desc", limit=1
+        )
         if not payment_token:
             self.message_post(
                 body=_(
